@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game with Difficulty Levels</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #333;
+            flex-direction: column;
+        }
+        #menu {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        canvas {
+            background-color: #000;
+            border: 2px solid #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <h2 style="color: white;">Select Difficulty</h2>
+        <button onclick="startGame('easy')">Easy</button>
+        <button onclick="startGame('medium')">Medium</button>
+        <button onclick="startGame('hard')">Hard</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let boxSize, rows, columns, gameInterval;
+        let snake, direction, food, score, gameSpeed;
+
+        function initializeGame() {
+            // Set box size and dimensions based on window size
+            const minDimension = Math.min(window.innerWidth, window.innerHeight);
+            boxSize = Math.floor(minDimension / 20); // Dynamically set box size
+            canvas.width = boxSize * 20;
+            canvas.height = boxSize * 20;
+
+            rows = canvas.height / boxSize;
+            columns = canvas.width / boxSize;
+
+            // Initialize game variables
+            snake = [{ x: 10 * boxSize, y: 10 * boxSize }];
+            direction = "RIGHT";
+            food = {
+                x: Math.floor(Math.random() * columns) * boxSize,
+                y: Math.floor(Math.random() * rows) * boxSize
+            };
+            score = 0;
+        }
+
+        function startGame(difficulty) {
+            // Set game speed based on difficulty level
+            if (difficulty === 'easy') {
+                gameSpeed = 200;
+            } else if (difficulty === 'medium') {
+                gameSpeed = 100;
+            } else if (difficulty === 'hard') {
+                gameSpeed = 50;
+            }
+
+            // Hide menu and initialize the game
+            document.getElementById("menu").style.display = "none";
+            initializeGame();
+
+            // Start game loop
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(drawGame, gameSpeed);
+        }
+
+        document.addEventListener("keydown", changeDirection);
+
+        function changeDirection(event) {
+            if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
+            else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
+            else if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
+            else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Display the score
+            ctx.fillStyle = "white";
+            ctx.font = `${boxSize}px Arial`;
+            ctx.fillText("Score: " + score, boxSize, boxSize);
+
+            // Draw the food
+            ctx.fillStyle = "red";
+            ctx.fillRect(food.x, food.y, boxSize, boxSize);
+
+            // Draw the snake
+            ctx.fillStyle = "lime";
+            snake.forEach(part => {
+                ctx.fillRect(part.x, part.y, boxSize, boxSize);
+            });
+
+            // Move the snake
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if (direction === "UP") snakeY -= boxSize;
+            else if (direction === "DOWN") snakeY += boxSize;
+            else if (direction === "LEFT") snakeX -= boxSize;
+            else if (direction === "RIGHT") snakeX += boxSize;
+
+            // Check if the snake eats the food
+            if (snakeX === food.x && snakeY === food.y) {
+                score++;
+                food = {
+                    x: Math.floor(Math.random() * columns) * boxSize,
+                    y: Math.floor(Math.random() * rows) * boxSize
+                };
+            } else {
+                snake.pop();
+            }
+
+            const newHead = { x: snakeX, y: snakeY };
+
+            // Game Over conditions
+            if (
+                snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height ||
+                snake.some(part => part.x === newHead.x && part.y === newHead.y)
+            ) {
+                alert("Game Over! Score: " + score);
+                clearInterval(gameInterval); // Stop game loop
+                document.getElementById("menu").style.display = "flex"; // Show menu again
+                return;
+            }
+
+            snake.unshift(newHead);
+        }
+    </script>
+</body>
+</html>
